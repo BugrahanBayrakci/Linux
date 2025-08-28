@@ -491,6 +491,7 @@ ls  *.txt  2>/dev/null
 
 
 ###  expr (evaluate expressions) Komutu
+Boşluklara dikkat edilerek
 ```bash
 # Toplama
 expr 5 + 3        # Çıktı: 8
@@ -515,8 +516,19 @@ a=10
 b=3
 expr $a + $b
 
-
+ 
 ```
+boşluksuz 
+```bash
+
+ddal@admin~ $ echo `expr   3   \*   4`
+12
+ddal@admin~ $ sayi=`expr   3   \*   5`
+ddal@admin~ $ ((sayi++))
+ddal@admin~ $ echo $sayi
+16
+```
+
 expr için mantıksal VEYA | dir. Pipe karakteri ile karıştırılmasın diye \| şeklinde kullanılmalıdır.
 
 expr için mantıksal VE & dir. Background process karakteri ile karıştırılmasın diye \& şeklinde kullanılmalıdır.
@@ -1110,3 +1122,270 @@ echo $?  # 1
 | `-ge`              | Büyük Eşit Mi? |                   |                | `-r`                   | Dosya Okunabilir Mi?      |
 | `-lt`              | Küçük Mü?      |                   |                | `-w`                   | Dosya Yazılabilir Mi?     |
 | `-le`              | Küçük Eşit Mi? |                   |                | `-x`                   | Dosya Çalıştırılabilir Mi? |
+
+
+
+
+
+
+Şartlı Deyimler (if, elif ve else)
+```bash
+
+if [ koşul ]; then
+    # koşul doğruysa çalışacak komutlar
+elif [ başka_koşul ]; then
+    # ilk koşul yanlış, bu koşul doğruysa çalışır
+else
+    # yukarıdaki hiçbir koşul doğru değilse burası çalışır
+fi
+
+```
+
+ Bir if deyiminde if komutu, ilk koşul, then ifadesi, koşul doğruysa çalışacak komut ve fi komutu zorunludur. 
+
+```bash
+#!/bin/bash
+sayi=10
+
+if [ $sayi -gt 0 ]; then
+    echo "Sayı pozitiftir."
+elif [ $sayi -lt 0 ]; then
+    echo "Sayı negatiftir."
+else
+    echo "Sayı sıfırdır."
+fi
+```
+```bash
+
+if   test   $sayi   -gt   10  
+if   [   $sayi   -gt    10   ]  
+
+if   [   $sayi   \>  10   ]
+if   [[   $sayi   >  10   ]]
+```
+
+
+Sayısal karşılaştırmalarda -gt (greater than) kullanmalısın:
+
+✅ 1. if test $sayi -gt 10
+
+✅ 2. if [ $sayi -gt 10 ]
+
+Bunlar aynı şey (ikisi de POSIX standart).
+
+-gt → sayısal karşılaştırma yapar.
+
+Yani matematik mantığıyla 11 > 10 true, 9 > 10 false çıkar.
+
+⚠️ 3. if [ $sayi \> 10 ]
+
+Burada > operatörü kullanılmış → bu string (alfabetik) karşılaştırmadır.
+
+\> yazman gerekiyor çünkü > tek başına yazarsan Bash bunu dosya yönlendirmesi (> file) sanıyor.
+
+"9" \> "10" → TRUE döner çünkü ASCII’de '9' karakteri '1' karakterinden büyüktür.
+
+⚠️ 4. if [[ $sayi > 10 ]]
+
+Bu da string karşılaştırma yapar.
+
+\ işareti gerekmez çünkü [[ ... ]] içinde yönlendirme sanılmaz.
+
+Ama mantık yine alfabetik: "9" > "10" TRUE çıkar.
+
+```bash
+### Mantıksal VE
+
+if   [   condition1   -a   condition2   ]
+
+if   [   condition1   ]  &&  [   condition2   ]
+
+if   [[   condition1   &&   condition2   ]]
+
+### Mantıksal VEYA
+
+if   [   condition1   -o   condition2   ]
+
+if   [   condition1   ]  ||  [   condition2   ]
+
+if   [[   condition1   ||   condition2   ]]
+```
+
+## Case yapısı
+```bash
+
+case değişken in
+    pattern1)
+        # komutlar
+        ;;
+    pattern2)
+        # komutlar
+        ;;
+    *)
+        # varsayılan durum
+        ;;
+esac
+```
+Örnek
+
+```bash
+#!/bin/bash
+echo "Bir harf girin (a, b, c): "
+read harf
+
+case $harf in
+    a)
+        echo "A harfini seçtiniz"
+        ;;
+    b)
+        echo "B harfini seçtiniz"
+        ;;
+    c)
+        echo "C harfini seçtiniz"
+        ;;
+    *)
+        echo "Geçersiz seçim!"
+        ;;
+esac
+```
+
+## Döngüler 
+
+### While Döngüsü
+```bash
+while [ koşul ]; do
+    # komutlar
+done
+```
+
+### For Döngüsü
+Kullanım 1 
+```bash
+for değişken in liste; do
+    # komutlar
+done
+# Kullanım 2 
+for((ifade1;ifade2;ifade3))
+do
+	komutlar 
+done
+```
+Kullanım 2
+```bash
+
+for((ifade1;ifade2;ifade3))
+do
+	komutlar 
+done
+
+```
+ifade1: Döngü değişkeninin ilk değeri
+
+ifade2: Döngü koşulu
+
+ifade3: Döngü değişkeninin güncellendiği aritmetik ifade
+
+Örnek
+```bash
+
+for  i  in 1 2 3 4 5 6 7 8 9 10 
+
+for((i=1;i<=10;i=i+1)) 
+
+for  i  in {1..10}    	     # Brace Expansion
+
+for  i  in `seq 1 10` 	     # sequence of numbers 
+
+for  i  in $(seq 1 10) 	     # sequence of numbers
+
+do
+```
+Hepsi aynı
+
+
+## Kabuk Programı Argümanları
+
+| Parametre | Açıklama                              |
+| --------- | ------------------------------------- |
+| `$0`      | Script adı                            |
+| `$1`      | Kabuk programına aktarılan 1. argüman |
+| `$2`      | Kabuk programına aktarılan 2. argüman  |
+| `$#`      | Kaç argüman gönderildi                |
+| `$@`      | Tüm argümanlar (her biri ayrı)        |
+| `$*`      | Tüm argümanlar (tek string olarak)    |
+| `$$`      | Script’in PID’si (process ID)         |
+| `$?`      | Son çalıştırılan komutun çıkış durumu |
+
+```bash
+./Argumanlar.sh   Bugor   Etkingames
+```
+
+Kabuk Programinizin Adi       		:    ./Argumanlar.sh
+
+Kabuk Programinizin Tum Argumanlari	:    Bugor     Etkingames     
+
+Kabuk Programinizin Arguman Sayisi	:    2
+
+Kabuk Programinizin 1. Argumani   	:    Bugor
+
+Kabuk Programinizin 2. Argumani   	:    Etkingames
+
+
+## Sayısı Bilinmeyen Argümanlara Erişim
+
+```bash
+#!/bin/bash
+
+for i in "$@"
+do
+    echo "$i"
+done
+
+```
+Açıklama:
+
+\$* ve \$@ (tırnaksız kullanıldığında) aynı işlevi görür, tüm argümanları boşlukla ayırarak döner.
+
+"$*" → Tüm argümanları tek bir string haline getirir.
+
+
+Örn: 3 argüman (a b, c, d) verilirse:
+
+"a b c d"
+
+"$@" → Tüm argümanları ayrı ayrı stringler halinde korur.
+
+Örn: 3 argüman (a b, c, d) verilirse:
+
+"a b" "c" "d"
+
+yani 3 ayrı argüman olur.
+
+```bash
+#!/bin/bash
+for((i=1;i<=$#;i++))
+do
+	echo "${!i}";#echo "$i" ile fark?
+done
+```
+${!i} ne demek?
+
+${!i} → indirect expansion (dolaylı genişletme).
+
+i değişkeninin değeri kaç ise, o pozisyondaki parametreyi çağırır.
+
+$i ne demek?
+
+$i → döngü değişkeninin değeri.
+
+Yani i=1 ise $i → 1 yazdırır.
+
+
+indirection örneği
+```bash
+i="hello"     # i = "hello"
+hello="bye"   # hello = "bye"
+
+echo "$i"     # -> hello
+echo "${!i}"  # -> bye  (çünkü $i = "hello", yani aslında $hello okunuyor)
+```
