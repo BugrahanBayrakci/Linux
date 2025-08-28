@@ -1389,3 +1389,328 @@ hello="bye"   # hello = "bye"
 echo "$i"     # -> hello
 echo "${!i}"  # -> bye  (çünkü $i = "hello", yani aslında $hello okunuyor)
 ```
+
+## Bir Dosyayı Satır Satır Okumak 
+```bash
+#!/bin/bash
+cat $1|      
+while read line
+do
+	echo "$line";	
+done
+```
+
+```bash
+#!/bin/bash
+while read line
+do
+	echo "$line";	
+done < $1      
+```
+
+## Kabuk Fonksiyonları
+
+```bash
+# Yöntem 1
+function_name() {
+    # komutlar
+}
+
+# Yöntem 2  
+function function_name {
+    # komutlar
+}
+```
+
+```bash
+
+#!/bin/bash
+
+selamla() {
+    echo "Merhaba $1" ## $1 ilk parametre
+}
+
+selamla "Deniz"
+selamla "Ahmet"
+```
+
+
+
+Alt fonksiyon return komutu ile geriye bir değer döndürebilir ve bu değer alt fonksiyonun çağrıldığı yerde $? ile test edilebilir.
+
+```bash
+
+#!/bin/bash
+
+kontrolEt() {
+    if [ -f "$1" ]; then
+        echo "Dosya bulundu: $1"
+        return 0   # 0 → başarılı
+    else
+        echo "Dosya yok: $1"
+        return 1   # 1 → hata
+    fi
+}
+
+kontrolEt "deneme.txt"
+
+if [ $? -eq 0 ]; then
+    echo "İşlem başarılı."
+else
+    echo "İşlem başarısız."
+fi
+
+```
+for i in $1/* yapısı, verilen dizin içindeki tüm dosya ve klasörleri tek tek dolaşmak için kullanılır.
+
+
+## IFS (Input/Internal Field Separator)
+
+Kabuk bu değişkeni kullanarak girdiyi nasıl parçalayacağını belirler.
+
+Varsayılan olarak IFS şunları içerir:
+
+Boşluk (space)
+
+Tab (\t)
+
+Yeni satır (\n)
+```bash
+
+# String'i kelimelere ayırma
+text="apple banana cherry"
+for word in $text; do
+    echo "Kelime: $word"
+done
+# Çıktı:
+# Kelime: apple
+# Kelime: banana
+# Kelime: cherry
+```
+
+```bash
+
+# Virgülle ayrılmış değerler için IFS ayarlama
+IFS=','
+data="elma,armut,kiraz,üzüm"
+for item in $data; do
+    echo "Meyve: $item"
+done
+
+# IFS'yi eski haline getir
+IFS=$' \t\n'
+```
+
+```bash
+
+parse_ip() {
+    local ip="192.168.1.100"
+    local old_ifs="$IFS"
+    IFS='.'
+    
+    set -- $ip  # Pozisyonel parametrelere ata
+    echo "1. oktet: $1"
+    echo "2. oktet: $2" 
+    echo "3. oktet: $3"
+    echo "4. oktet: $4"
+    
+    IFS="$old_ifs"
+}
+```
+
+### DİZİLER 
+ dizi indisi 0’dan başlar.
+
+ dizilerin boyutları ile ilgili bir maksimum kısıtlaması yoktur.
+
+```bash
+ # Yöntem 1: Doğrudan atama
+fruits[0]="elma"
+fruits[1]="armut"
+fruits[2]="kiraz"
+
+# Yöntem 2: Parantez ile
+fruits=("elma" "armut" "kiraz" "üzüm")
+
+fruits=("elma" "armut" "kiraz")
+
+#Boş dizi deklarasoyonu
+$ fruits=();
+
+# Tek elemana erişim
+echo ${fruits[0]}    # elma 
+echo $fruits         # elma
+echo ${fruits}       # elma
+echo ${fruits[1]}    # armut
+
+# Tüm elemanlara erişim
+echo ${fruits[@]}    # elma armut kiraz
+echo ${fruits[*]}    # elma armut kiraz
+
+# Son element
+echo ${fruits[-1]}   # kiraz (Bash 4.3+)
+```
+
+
+
+
+```bash
+
+Linux=("Debian" "Red Hat" "Ubuntu" "Suse" "Fedora")
+
+for i in ${Linux[@]}; do
+    echo $i  # Red ve hati ayrı olarak alır.
+done
+
+echo "BUDA İKİNCİ SATIR---------------------"
+
+for i in "${Linux[@]}"; do #böyle aynen korunur.
+    echo "$i"
+done
+```
+
+# Dizi Dilimleme (Array Slicing)
+```bash
+numbers=(1 2 3 4 5 6 7 8 9 10)
+
+# İndeks 2'den başlayarak 3 eleman
+echo ${numbers[@]:2:3}    # 3 4 5
+
+# İndeks 5'ten sonuna kadar
+echo ${numbers[@]:5}      # 6 7 8 9 10
+
+# Sondan 3 eleman
+echo ${numbers[@]: -3}    # 8 9 10
+
+$ Linux=("Debian"  "Red Hat"  "Ubuntu"  "Suse"  "Fedora");
+$ echo ${Linux[2]:0:4}; #2. indeksteki elemanın ilk 4 karakteri çıktı Ubun
+
+$ echo ${#Linux[@]}; ##Bir Dizinin Eleman Sayısı (Boyutu) 5
+
+$ echo ${#Linux[2]}; #İndeks 2’de bulunan dizi elemanının boyutu  6
+
+fruits=("elma" "armut")
+
+# Sona ekleme
+fruits+=("kiraz")
+fruits[${#fruits[@]}]="üzüm"
+$ Linux=("${Linux[@]}"  "Knoppix");
+
+# Başa ekleme
+$ Linux=("Kali Linux"   "${Linux[@]}"); 
+
+# Belirli indekse ekleme
+fruits[10]="muz"
+
+# Dizinin İlk Elemanının Silinmesi
+$ Linux=("${Linux[@]:1}");
+
+$ Linux=("${Linux[@]:0:$((${#Linux[@]}-1))}");
+
+# Bir Dizinin Aradan Bir Elemanının Silinmesi
+
+pos=3; 
+Linux=("${Linux[@]:0:$pos}"  "${Linux[@]:$((pos + 1))}"); 
+
+# Bir Dizinin Kopyalanması
+$ LinuxYedek=("${Linux[@]}");
+
+fruits=("elma" "armut" "kiraz" "üzüm")
+
+# Yöntem 1: Elemanları döngüde
+for fruit in "${fruits[@]}"; do
+    echo "Meyve: $fruit"
+done
+
+# Yöntem 2: İndeks ile döngü
+for i in "${!fruits[@]}"; do
+    echo "İndeks $i: ${fruits[i]}"
+done
+
+# Yöntem 3: C tarzı döngü
+for ((i=0; i<${#fruits[@]}; i++)); do
+    echo "Eleman $i: ${fruits[i]}"
+done
+
+```
+
+
+## Karekter dizileri ile ilgili işlemler
+Stringin uzunluğunun hesabı
+```bash
+# Yöntem 1
+$ isim="Bugor";
+$ echo ${#isim};
+# Çıktı:5
+
+# Yöntem 2
+
+$ isim="Bugor";
+$ echo "$isim" | wc -c 
+# Çıktı:6 Çünkü echo komutu stringin sonuna otomatik olarak bir satır sonu karakteri (\n, newline) ekler.  echo -n "$isim" | wc -c 5 çıkar
+
+echo `expr length "$isim"`
+```
+```bash
+
+
+$ dosyaAdi="Uygulama1.sh";
+$ uzantisizDosyaAdi=$(basename  $dosyaAdi  .sh); # 
+$ echo $uzantisizDosyaAdi;
+Uygulama1
+
+$ dosyaAdi="Uygulama1";
+$ uzantisizDosyaAdi=`basename  $dosyaAdi  .sh`;
+$ echo $uzantisizDosyaAdi;
+Uygulama1
+
+```
+Burada basename komutu kullanılıyor.
+
+basename \<dosya> [uzanti] → bir dosya adını alır, varsa yol kısmını ve verdiğin uzantıyı atar, sadece saf dosya adını döndürür.
+
+
+
+# Bir Dosyanın Uzantısının Ayrıştırılması
+(Dosya Uzantısı Varsa Ama Uzantı Bilinmiyorsa)
+(Dosya Adı Bir Tek Nokta Karakteri İçeriyorsa)
+```bash
+
+$ dosyaAdi="Uygulama1.sh";
+$ uzantisizDosyaAdi=$(echo "$dosyaAdi"|cut  -d  '.'  -f  1);
+$ dosyaUzantisi=`echo "$dosyaAdi"|cut  -d  '.'  -f  2`;
+$ echo $uzantisizDosyaAdi;
+Uygulama1
+$ echo $dosyaUzantisi;
+sh
+```
+# rev (reverse) Komutu
+```bash
+
+$ string1="ey edip adanada pide ye";
+$ string2=$(echo "$string1"|rev);
+$ echo $string2;
+ey edip adanada pide ye
+$ test "$string1"  =  "$string2";echo $?;#Palindrom Testi
+0
+```
+
+Bir Dosyanın Uzantısının Ayrıştırılması
+(Dosya Uzantısı Varsa Ama Uzantı Bilinmiyorsa)
+(Dosya Adı Birden Fazla Nokta Karakteri İçeriyorsa) (1)
+
+
+```bash
+
+$ dosyaAdi="Uygulama1.sh.txt.jpeg";
+$ uzantisizDosyaAdi=$(echo "$dosyaAdi"|rev);
+$ echo $uzantisizDosyaAdi
+gepj.txt.hs.1amalugyU
+$ uzantisizDosyaAdi=$(echo "$dosyaAdi"|rev|cut -d '.' -f 2-);
+$ echo $uzantisizDosyaAdi
+txt.hs.1amalugyU
+$ uzantisizDosyaAdi=$(echo "$dosyaAdi"|rev|cut -d '.' -f 2-|rev);
+$ echo $uzantisizDosyaAdi
+Uygulama1.sh.txt
+
+```
