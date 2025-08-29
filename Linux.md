@@ -1714,3 +1714,334 @@ $ echo $uzantisizDosyaAdi
 Uygulama1.sh.txt
 
 ```
+## AWK UTILITY
+AWK kabuk programlamada çok güçlü bir metin işleme aracıdır.
+```bash
+awk 'pattern { action }' dosya
+```
+
+1.
+```bash
+
+awk 'pattern { action }' filename
+```
+
+→ Dosyadaki her satır için pattern kontrol edilir, eşleşen satırlarda action çalıştırılır.
+```bash
+
+awk '/error/ {print $1, $2}' logfile
+```
+→ logfile içindeki "error" geçen satırların 1. ve 2. sütununu yazdırır.
+
+2.
+```bash
+
+awk '{ action }' filename
+```
+→ Pattern yok, yani her satıra action uygulanır.
+```bash
+
+awk '{print $1}' data.txt
+```
+→ Tüm satırların sadece 1. sütununu yazdırır.
+```bash
+
+awk 'pattern' filename
+```
+→ Action yok, yani varsayılan işlem çalışır: print $0.
+
+```bash
+
+awk '/error/' logfile
+```
+→ "error" geçen satırların tamamını yazdırır.
+
+awk girdiyi kayıtlara ve alanlara böler
+
+Her satır bir kayıttır (varsayılan olarak)
+
+Her kayıt, özel bir karakterle (varsayılan olarak boşluk) ayrılmış alanlara bölünür
+
+Ayırıcıyı -F veya FS ile değiştirebilirsiniz
+
+George Jones Admin
+
+Anthony Smith Accounting
+
+| Record   | field-1 $1 | field-2 $2 | field-3   $3 |
+|----------|---------|---------|-------------|
+| record 1 | George  | Jones   | Admin       |
+| record 2 | Anthony | Smith   | Accounting  |
+
+
+$0, tüm satırı kapsayan özel bir alandır
+```bash
+
+awk '{ print $1, $3 }' dosya.txt
+```
+
+Virgüller, çıktının boşluklarla ayrılmasını istediğimizi belirtir (aksi takdirde birleştirilirler):
+
+```bash
+$ cat phonelist
+Joe Smith 774-0888
+Mary Jones 772-2345
+Hank Knight 494-8888
+```
+```bash
+
+$ awk '{print "Name:",$1,$2,"   Telephone:",$3}' phonelist
+```
+```bash
+
+Name: Joe Smith    Telephone: 774-0888
+Name: Mary Jones    Telephone: 772-2345
+Name: Hank Knight    Telephone: 494-8888
+```
+
+small000:x:1164:102:Faculty-Pam Smallwood:/export/home/small000:/bin/ksh
+
+```bash
+$ awk -F':' '/small000/{print $5}' /etc/passwd
+```
+Faculty-Pam Smallwood
+varsıylan olan boşluğu : yaptı.
+
+
+AWK ile pipe kullanım:
+```bash
+ls -l | awk '{ print $9, $5 }'  # Dosya adı ve boyutu
+```
+
+AWK ile operatörler:
+
+İlişkisel Operatörler:
+
+awk, bir alanı bir değere karşılaştırmak için ilişkisel operatörleri ( <, >, <=, >=, ==,!=, ! ) kullanabilir
+Karşılaştırmanın sonucu doğruysa eylem gerçekleştirilir
+
+```bash
+
+# dosya.txt içindeki 1. sütunu kontrol et, 10’dan büyük olan satırları yazdır
+awk '$1 > 10 { print $0 }' dosya.txt
+
+# 2. sütun "apple" olan satırları yazdır
+awk '$2 == "apple" { print $0 }' dosya.txt
+
+# 3. sütun 50 ile 100 arasında olan satırları yazdır
+awk '$3 >= 50 && $3 <= 100 { print $0 }' dosya.txt
+
+#  log.txt dosyasında 'Win32' İÇERMEYEN her kaydı yazdırmak için
+$ awk '!/Win32/' log.txt
+```
+```bash
+
+$ cat kim                           
+pugli766 pts /8 Haz 3 22:24 (da1-229-38-103.den.pcisys.net)
+lin318 puan /17 Haz 6 10:58 (12-254-120-56.client.attbi.com)
+small000 pts /18 Haz 6 13:16 (mackey.rbe36-213.den.pcisys.net)
+mcdev712 puan /10 Haz 6 11:52 (ip68-104-41-121.lv.lv.cox.net)
+gibbo201 puan /12 Haz 6 12:15 (12-219-115-107.client.mchsi.com)
+nelso828 puan /16 Haz 5 19:17 (65.100.138.177)
+
+$ kim | awk '$4<6{print $1,$3,$4,$5}'
+pugli766 3 Haz 22:24
+nelso828 5 Haz 19:17
+```
+
+4 < 6 → Dosyadaki 4. sütun değeri 6’dan küçükse satırı eşleştir.
+
+{ print $1,$3,$4,$5 } → Eşleşen satırlarda 1., 3., 4. ve 5. sütunları yazdır.
+
+AWK - Pattern Matching /regular expression
+
+```bash
+/^$/{print "Bu satır boştur"}
+$1~ / num /{print "Satır $1'de num içeriyor "}
+$2!~ /num/ { print "Satır $2'de num içermiyor " }
+! /num/{print "Satır num içermiyor " }
+/[0-9]+$/{print "Tam sayı son:",$0}
+/^[AZ]/{print "Büyük harfle başlar"}
+```
+```bash
+
+# "Error" ile başlayan satırlar
+awk '/^Error/ { print }' log.txt
+
+# ".log" ile biten satırlar
+awk '/\.log$/ { print }' filelist.txt
+
+# Boş satırlar
+awk '/^$/ { print "Boş satır:", NR }' file.txt
+```
+
+Seçenek farkı :
+```bash
+
+awk -F':' '/small000/{print $5}' /etc/passwd
+ ```
+
+ -F':' → Alan (field) ayırıcıyı : yapar. Yani /etc/passwd dosyası : ile bölündüğü için $1, $2, ... sütunlarını öyle alır.
+```bash
+
+$ awk -f awkfile datafile
+ ```
+-f awkfile → awk komutlarını tek tek yazmak yerine, bir dosyanın (awkfile) içinden oku.
+
+```bash
+
+$ cat students
+Bill White 333333	1980/01/01 Science
+Jill Blue  333444	1978/03/20	 Arts
+Bill Teal  555555	1985/02/26	 CompSci
+Sue Beige  555777	1963/09/12	 Science
+$ cat awkprog.awk
+/5?5/{print $1,$2}
+/3*4/{print $5}
+ ```
+
+```bash
+$ awk –f awkprog.awk students
+ ```
+
+Çıktı:
+
+Arts
+
+Bill Teal
+
+Sue Beige
+
+```bash
+
+$ cat students
+Bill White 333333	1980/01/01 Science
+Jill Blue  333444	1978/03/20	 Arts
+Bill Teal  555555	1985/02/26	 CompSci
+Sue Beige  555777	1963/09/12	 Science
+$ cat awkprog.awk
+/Science/{print "Science stu:",$1,$2}
+/CompSci/{print "Computing stu:",$1,$2}
+ ```
+```bash
+$ awk –f awkprog.awk students
+ ```
+Science stu: Bill White
+
+Computing stu: Bill Teal
+
+Science stu: Sue Beige
+
+### awk Variables
+
+NR=Current Record Number (start at 1)
+Counts ALL records, not just those that match
+
+
+| Değişken | Anlamı                                                                                                           |
+| -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `NF`     | Mevcut satırdaki alan (kolon) sayısı. Örnek: Satırda 5 sütun varsa `NF=5`.                                       |
+| `NR`     | Şu ana kadar işlenen kayıt (satır) sayısı. Örnek: İlk satırda `NR=1`.                                            |
+| `FILENAME`   | Şu anda işlenen dosyanın adı.                                             |                        |
+| `FS`     | Alan ayracı (default: boşluk veya tab). Örnek: `awk 'BEGIN{FS=","} {...}' dosya.csv` ile virgül ayırıcı yapılır. |
+| `OFS`    | Çıktı alan ayracı (default: boşluk). Örnek: `print $1, $2` → `$1` ile `$2` arasında `OFS` kullanılır.            |
+| `RS`     | Kayıt ayracı (default: yeni satır `\n`). Satır yerine başka bir karakterle ayırmak için değiştirilebilir.        |
+| `ORS`    | Çıktı kayıt ayracı (default: `\n`). `print` sonrası kullanılacak karakteri belirler.                             |
+
+
+
+### awk Fucntion
+
+| Fonksiyon    | Açıklama                                                          |
+| ------------ | ----------------------------------------------------------------- |
+| `sqrt(x)`    | `x` sayısının karekökünü döndürür.                                |
+| `sin(x)`     | `x` radyan cinsinden sinüs değerini döndürür.                     |
+| `index(s1,s2)`     | position of string s2 in string s1                 |
+| `substr ( s,m,n ) `     | s'nin m'den başlayan n karakterli alt dizisi                  |
+| `tolower (s)`     | Dizeyi küçük harfe dönüştürür                           |
+| `log(x)`     | `x` sayısının doğal logaritmasını döndürür (ln x).                |
+| `int(x)`     | `x` sayısını tam sayıya yuvarlar (keser).                         |
+| `rand()`     | 0 ile 1 arasında rastgele sayı üretir.                            |
+| `printf` | C gibi biçimlendirilmiş printf yazdır |
+
+
+### Format Specification
+
+| Belirteç | Anlamı                          |
+| -------- | ------------------------------- |
+| `%d`     | Tam sayı (decimal)              |
+| `%f`     | Ondalık sayı                    |
+| `%.2f`   | Ondalık sayı, 2 basamak         |
+| `%s`     | String                          |
+| `%c`     | Tek karakter                    |
+| `%e`     | Bilimsel gösterim (exponential) |
+| `%x`     | Onaltılık (hexadecimal)         |
+
+
+Üçüncü alanı iki ondalık basamaklı kayan noktalı bir sayı olarak görüntülemek için: 
+```bash
+
+awk '{printf("%.2f\n",$3)}' file
+```
+
+AWK programları
+
+
+BEGIN{
+   ….
+}
+
+{
+   ….
+}
+
+pattern{
+   
+ …..
+}
+
+END{
+  …..
+}
+
+a) BEGIN
+
+Dosya okunmadan önce çalışır.
+
+Genellikle değişken başlatma, alan ayırıcı (FS) tanımlama veya başlık yazdırma için kullanılır.
+```bash
+
+awk 'BEGIN { print "Dosya işleme başladı" }'
+```
+
+
+
+b) END
+
+Dosya tamamen okunduktan sonra çalışır.
+
+Genellikle toplam, ortalama, sayma veya özet raporlar için kullanılır.
+```bash
+awk '{ sum += $1 } END { print "Toplam:", sum }' dosya.txt
+```
+örnek
+```bash
+
+awk '
+BEGIN { 
+    print "Ad | Yaş" 
+    print "-----------" 
+}
+{ 
+    print $1, $2 
+}
+END { 
+    print "Toplam kayıt sayısı:", NR 
+}' dosya.txt
+```
+
+BEGIN bloğu → başlık yazdırılır
+
+Her satır → $1 ve $2 yazdırılır
+
+END bloğu → toplam kayıt sayısı yazdırılır (NR ile)
